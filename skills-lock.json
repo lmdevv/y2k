@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "daytona": {
+      "source": "daytona/skills",
+      "sourceType": "github",
+      "computedHash": "ee8aab59d49c1a0bebbcde7132ea2b74c98947f802cb7cc1281fcd1a1a1258cd"
+    },
     "manim-composer": {
       "source": "adithya-s-k/manim_skill",
       "sourceType": "github",
