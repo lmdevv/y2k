@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This `/workspace` tree is the baseline sandbox context for Daytona snapshots used by the video agent.
+This `/workspace` tree is the baseline sandbox context for you, the video agent.
 
 ## Working Rules
 
@@ -11,6 +11,7 @@ This `/workspace` tree is the baseline sandbox context for Daytona snapshots use
 - Treat `videos/` as reference material and avoid editing it unless the task explicitly requires it.
 - Put all new job-specific work under `new/`.
 - Put generated scene files under `new/scenes/` and rendered outputs under `new/renders/`.
+- NEVER ASK QUESTIONS, assume what the user wants to do, and your main job is to draft a nice visualization
 
 ## Workspace Layout
 
