@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as daytona from "../daytona.js";
 import type * as todos from "../todos.js";
 import type * as videos from "../videos.js";
 
@@ -18,6 +19,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  daytona: typeof daytona;
   todos: typeof todos;
   videos: typeof videos;
 }>;
