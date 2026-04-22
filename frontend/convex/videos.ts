@@ -117,3 +117,32 @@ export const seed = internalMutation({
   },
 })
 
+export const createGenerated = internalMutation({
+  args: {
+    title: v.string(),
+    description: v.optional(v.string()),
+    muxPlaybackId: v.string(),
+    durationSeconds: v.optional(v.number()),
+    conversationId: v.optional(v.id('conversations')),
+    jobId: v.optional(v.id('videoJobs')),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('videos')
+      .withIndex('by_playback_id', (q) => q.eq('muxPlaybackId', args.muxPlaybackId))
+      .unique()
+
+    if (existing) {
+      return existing._id
+    }
+
+    return await ctx.db.insert('videos', {
+      title: args.title,
+      description: args.description,
+      muxPlaybackId: args.muxPlaybackId,
+      durationSeconds: args.durationSeconds,
+      conversationId: args.conversationId,
+      jobId: args.jobId,
+    })
+  },
+})

@@ -5,22 +5,24 @@
   "imports": {
     "#/*": "./src/*"
   },
-	"scripts": {
-		"dev": "vite dev --port 3000",
-		"build": "vite build",
-		"preview": "vite preview",
-		"test": "vitest run",
-		"daytona:snapshot": "node ./scripts/daytona/build-runner-snapshot.js",
-		"daytona:smoke": "node ./scripts/daytona/smoke-runner-sandbox.js",
-		"format": "biome format",
-		"lint": "biome lint",
-		"check": "biome check"
-	},
+  "scripts": {
+    "dev": "vite dev --port 3000",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "daytona:snapshot": "node ./scripts/daytona/build-runner-snapshot.js",
+    "daytona:smoke": "node ./scripts/daytona/smoke-runner-sandbox.js",
+    "format": "biome format",
+    "lint": "biome lint",
+    "check": "biome check"
+  },
   "dependencies": {
     "@convex-dev/react-query": "0.1.0",
     "@daytona/sdk": "^0.168.0",
+    "@mux/mux-node": "^14.0.1",
     "@mux/mux-player-react": "^3.11.8",
     "@mux/mux-uploader-react": "^1.4.1",
+    "@opencode-ai/sdk": "^1.14.20",
     "@t3-oss/env-core": "^0.13.10",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "latest",

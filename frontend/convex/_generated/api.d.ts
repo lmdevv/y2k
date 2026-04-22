@@ -8,7 +8,10 @@
  * @module
  */
 
+import type * as chat from "../chat.js";
 import type * as daytona from "../daytona.js";
+import type * as http from "../http.js";
+import type * as mux from "../mux.js";
 import type * as todos from "../todos.js";
 import type * as videos from "../videos.js";
 
@@ -19,7 +22,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  chat: typeof chat;
   daytona: typeof daytona;
+  http: typeof http;
+  mux: typeof mux;
   todos: typeof todos;
   videos: typeof videos;
 }>;
