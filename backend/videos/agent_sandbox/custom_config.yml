@@ -1,0 +1,17 @@
+directories:
+  output: "/workspace/videos"
+  temporary_storage: "/tmp/manim"
+
+camera_config:
+  pixel_width: 1280
+  pixel_height: 720
+  frame_rate: 30
+  background_color: "#0B1020"
+
+tex_config:
+  tex_compiler: "xelatex"
+
+style:
+  font: "CMU Serif"
+
+universal_import_line: "from manimlib import *"
