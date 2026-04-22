@@ -6,7 +6,6 @@ export const list = query({
   handler: async (ctx) => {
     return await ctx.db
       .query('todos')
-      .withIndex('by_creation_time')
       .order('desc')
       .collect()
   },

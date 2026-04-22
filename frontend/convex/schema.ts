@@ -11,4 +11,10 @@ export default defineSchema({
     text: v.string(),
     completed: v.boolean(),
   }),
+  videos: defineTable({
+    title: v.string(),
+    description: v.optional(v.string()),
+    muxPlaybackId: v.string(),
+    durationSeconds: v.optional(v.number()),
+  }).index('by_playback_id', ['muxPlaybackId']),
 })

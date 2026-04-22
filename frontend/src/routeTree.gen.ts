@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WatchVideoIdRouteImport } from './routes/watch/$videoId'
 import { Route as DemoConvexRouteImport } from './routes/demo/convex'
 import { Route as DemoClerkRouteImport } from './routes/demo/clerk'
 
@@ -22,6 +23,11 @@ const AboutRoute = AboutRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WatchVideoIdRoute = WatchVideoIdRouteImport.update({
+  id: '/watch/$videoId',
+  path: '/watch/$videoId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoConvexRoute = DemoConvexRouteImport.update({
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/demo/clerk': typeof DemoClerkRoute
   '/demo/convex': typeof DemoConvexRoute
+  '/watch/$videoId': typeof WatchVideoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/demo/clerk': typeof DemoClerkRoute
   '/demo/convex': typeof DemoConvexRoute
+  '/watch/$videoId': typeof WatchVideoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,20 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/demo/clerk': typeof DemoClerkRoute
   '/demo/convex': typeof DemoConvexRoute
+  '/watch/$videoId': typeof WatchVideoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/demo/clerk' | '/demo/convex'
+  fullPaths: '/' | '/about' | '/demo/clerk' | '/demo/convex' | '/watch/$videoId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/demo/clerk' | '/demo/convex'
-  id: '__root__' | '/' | '/about' | '/demo/clerk' | '/demo/convex'
+  to: '/' | '/about' | '/demo/clerk' | '/demo/convex' | '/watch/$videoId'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/demo/clerk'
+    | '/demo/convex'
+    | '/watch/$videoId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +82,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   DemoClerkRoute: typeof DemoClerkRoute
   DemoConvexRoute: typeof DemoConvexRoute
+  WatchVideoIdRoute: typeof WatchVideoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -83,6 +99,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/watch/$videoId': {
+      id: '/watch/$videoId'
+      path: '/watch/$videoId'
+      fullPath: '/watch/$videoId'
+      preLoaderRoute: typeof WatchVideoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/convex': {
@@ -107,6 +130,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   DemoClerkRoute: DemoClerkRoute,
   DemoConvexRoute: DemoConvexRoute,
+  WatchVideoIdRoute: WatchVideoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

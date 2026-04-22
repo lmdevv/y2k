@@ -9,6 +9,7 @@
  */
 
 import type * as todos from "../todos.js";
+import type * as videos from "../videos.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +19,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   todos: typeof todos;
+  videos: typeof videos;
 }>;
 
 /**
