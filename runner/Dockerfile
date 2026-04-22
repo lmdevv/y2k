@@ -1,12 +1,14 @@
 FROM python:3.11-bookworm
 
 ARG MANIMGL_VERSION=1.7.2
+ARG OPENCODE_PKG=opencode-ai
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1 \
     PATH=/opt/venv/bin:$PATH \
+    HOME=/workspace \
     MPLBACKEND=Agg \
     DISPLAY=:99 \
     XDG_RUNTIME_DIR=/tmp/runtime-root \
@@ -20,6 +22,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ffmpeg \
     git \
+    nodejs \
+    npm \
     build-essential \
     pkg-config \
     xvfb \
@@ -76,12 +80,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --upgrade pip "setuptools<81" wheel \
     && /opt/venv/bin/pip install "manimgl==${MANIMGL_VERSION}" \
+    && npm install -g "${OPENCODE_PKG}" \
     && ln -sf /opt/venv/bin/manimgl /usr/local/bin/manimgl \
     && ln -sf /opt/venv/bin/manim-render /usr/local/bin/manim-render
 
 WORKDIR /workspace
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY workspace/ /workspace/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
