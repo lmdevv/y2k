@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap');
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
@@ -6,119 +5,82 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Old YouTube aesthetic (~2011-2012):
+ * Light gray page bg, white content boxes, thin #ccc borders,
+ * Arial type, red "Tube" logo accent, bright blue links, dark top nav.
+ */
 :root {
-  --sea-ink: #173a40;
-  --sea-ink-soft: #416166;
-  --lagoon: #4fb8b2;
-  --lagoon-deep: #328f97;
-  --palm: #2f6a4a;
-  --sand: #e7f0e8;
-  --foam: #f3faf5;
-  --surface: rgba(255, 255, 255, 0.74);
-  --surface-strong: rgba(255, 255, 255, 0.9);
-  --line: rgba(23, 58, 64, 0.14);
-  --inset-glint: rgba(255, 255, 255, 0.82);
-  --kicker: rgba(47, 106, 74, 0.9);
-  --bg-base: #e7f3ec;
-  --header-bg: rgba(251, 255, 248, 0.84);
-  --chip-bg: rgba(255, 255, 255, 0.8);
-  --chip-line: rgba(47, 106, 74, 0.18);
-  --link-bg-hover: rgba(255, 255, 255, 0.9);
-  --hero-a: rgba(79, 184, 178, 0.36);
-  --hero-b: rgba(47, 106, 74, 0.2);
+  /* Old YouTube palette */
+  --yt-page-bg: #f1f1f1;
+  --yt-page-bg-dark: #e4e4e4;
+  --yt-content-bg: #ffffff;
+  --yt-border: #cccccc;
+  --yt-border-soft: #e1e1e1;
+  --yt-border-strong: #bdbdbd;
+  --yt-text: #333333;
+  --yt-text-soft: #666666;
+  --yt-text-muted: #999999;
+  --yt-link: #167ac6;
+  --yt-link-hover: #105283;
+  --yt-link-visited: #5a83a5;
+  --yt-red: #cc181e;
+  --yt-red-dark: #a30e13;
+  --yt-red-darker: #7a0a0f;
+  --yt-header-dark: #222222;
+  --yt-subheader: #333333;
+  --yt-button-bg: #f8f8f8;
+  --yt-button-bg-hover: #f0f0f0;
+  --yt-chip-bg: #ededed;
+  --yt-banner-bg: #e4efff;
+  --yt-banner-border: #b3cfef;
+  --yt-inset: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  --yt-drop: 0 1px 2px rgba(0, 0, 0, 0.06);
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.871 0.006 286.286);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.21 0.006 285.885);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.871 0.006 286.286);
+  /* shadcn semantic tokens remapped to YT palette */
+  --background: #f1f1f1;
+  --foreground: #333333;
+  --card: #ffffff;
+  --card-foreground: #333333;
+  --popover: #ffffff;
+  --popover-foreground: #333333;
+  --primary: #cc181e;
+  --primary-foreground: #ffffff;
+  --secondary: #f8f8f8;
+  --secondary-foreground: #333333;
+  --muted: #f1f1f1;
+  --muted-foreground: #666666;
+  --accent: #ededed;
+  --accent-foreground: #333333;
+  --destructive: #cc181e;
+  --destructive-foreground: #ffffff;
+  --border: #cccccc;
+  --input: #cccccc;
+  --ring: #167ac6;
+  --chart-1: #cc181e;
+  --chart-2: #167ac6;
+  --chart-3: #8a8a8a;
+  --chart-4: #4a4a4a;
+  --chart-5: #d4d4d4;
+  --radius: 2px;
+  --sidebar: #f8f8f8;
+  --sidebar-foreground: #333333;
+  --sidebar-primary: #cc181e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ededed;
+  --sidebar-accent-foreground: #333333;
+  --sidebar-border: #cccccc;
+  --sidebar-ring: #167ac6;
 }
 
 .dark {
-  --sea-ink: #d7ece8;
-  --sea-ink-soft: #afcdc8;
-  --lagoon: #60d7cf;
-  --lagoon-deep: #8de5db;
-  --palm: #6ec89a;
-  --sand: #0f1a1e;
-  --foam: #101d22;
-  --surface: rgba(16, 30, 34, 0.8);
-  --surface-strong: rgba(15, 27, 31, 0.92);
-  --line: rgba(141, 229, 219, 0.18);
-  --inset-glint: rgba(194, 247, 238, 0.14);
-  --kicker: #b8efe5;
-  --bg-base: #0a1418;
-  --header-bg: rgba(10, 20, 24, 0.8);
-  --chip-bg: rgba(13, 28, 32, 0.9);
-  --chip-line: rgba(141, 229, 219, 0.24);
-  --link-bg-hover: rgba(24, 44, 49, 0.8);
-  --hero-a: rgba(96, 215, 207, 0.18);
-  --hero-b: rgba(110, 200, 154, 0.12);
-
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.141 0.005 285.823);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.141 0.005 285.823);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.274 0.006 286.033);
-  --input: oklch(0.274 0.006 286.033);
-  --ring: oklch(0.442 0.017 285.786);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.274 0.006 286.033);
-  --sidebar-ring: oklch(0.442 0.017 285.786);
+  /* Dark mode intentionally kept minimal - old YT didn't have dark mode */
+  --background: #f1f1f1;
+  --foreground: #333333;
 }
 
 @theme inline {
-  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: Arial, 'Helvetica Neue', Helvetica, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -143,10 +105,10 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -155,6 +117,19 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-yt-red: var(--yt-red);
+  --color-yt-link: var(--yt-link);
+  --color-yt-text: var(--yt-text);
+  --color-yt-text-soft: var(--yt-text-soft);
+  --color-yt-text-muted: var(--yt-text-muted);
+  --color-yt-border: var(--yt-border);
+  --color-yt-border-soft: var(--yt-border-soft);
+  --color-yt-page-bg: var(--yt-page-bg);
+  --color-yt-content-bg: var(--yt-content-bg);
+  --color-yt-header-dark: var(--yt-header-dark);
+  --color-yt-banner-bg: var(--yt-banner-bg);
+  --color-yt-banner-border: var(--yt-banner-border);
 }
 
 html,
@@ -165,175 +140,399 @@ body,
 
 body {
   margin: 0;
-  color: var(--sea-ink);
-  font-family: var(--font-sans);
-  background-color: var(--bg-base);
-  background:
-    radial-gradient(1100px 620px at -8% -10%, var(--hero-a), transparent 58%),
-    radial-gradient(1050px 620px at 112% -12%, var(--hero-b), transparent 62%),
-    radial-gradient(720px 380px at 50% 115%, rgba(79, 184, 178, 0.1), transparent 68%),
-    linear-gradient(180deg, color-mix(in oklab, var(--sand) 68%, white) 0%, var(--foam) 44%, var(--bg-base) 100%);
-  overflow-x: hidden;
+  color: var(--yt-text);
+  font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  background: var(--yt-page-bg);
+  background-image:
+    linear-gradient(
+      180deg,
+      #ededed 0%,
+      #f1f1f1 80px,
+      #f1f1f1 100%
+    );
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
+/* Subtle noise texture to match the gritty old-YT look */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: -1;
-  opacity: 0.28;
-  background:
-    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.8), transparent 34%),
-    radial-gradient(circle at 78% 26%, rgba(79, 184, 178, 0.2), transparent 42%),
-    radial-gradient(circle at 42% 82%, rgba(47, 106, 74, 0.14), transparent 36%);
-}
-
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.14;
+  opacity: 0.35;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: radial-gradient(circle at 50% 30%, black, transparent 78%);
+    radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.035) 1px, transparent 0);
+  background-size: 3px 3px;
 }
 
 a {
-  color: var(--lagoon-deep);
-  text-decoration-color: rgba(50, 143, 151, 0.4);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
+  color: var(--yt-link);
+  text-decoration: none;
 }
 
 a:hover {
-  color: #246f76;
+  text-decoration: underline;
+  color: var(--yt-link-hover);
+}
+
+a:visited {
+  color: var(--yt-link-visited);
 }
 
 code {
+  font-family: 'Courier New', Courier, monospace;
   font-size: 0.9em;
-  border: 1px solid var(--line);
-  background: color-mix(in oklab, var(--surface-strong) 82%, white 18%);
-  border-radius: 7px;
-  padding: 2px 7px;
+  background: #f4f4f4;
+  border: 1px solid var(--yt-border-soft);
+  padding: 1px 4px;
+  border-radius: 2px;
 }
 
-pre code {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  border-radius: 0;
-  font-size: inherit;
-  color: inherit;
-}
-
-.prose pre {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #1d2e45;
-  color: #e8efff;
-}
-
-.page-wrap {
-  width: min(1080px, calc(100% - 2rem));
+/* Shared: main content wrapper widths */
+.yt-page {
+  width: min(1000px, calc(100% - 16px));
   margin-inline: auto;
 }
 
-.display-title {
-  font-family: 'Fraunces', Georgia, serif;
+.yt-page-wide {
+  width: min(1100px, calc(100% - 16px));
+  margin-inline: auto;
 }
 
-.island-shell {
-  border: 1px solid var(--line);
-  background: linear-gradient(165deg, var(--surface-strong), var(--surface));
+/* A white bordered content box (used for main video list, about, etc) */
+.yt-box {
+  background: var(--yt-content-bg);
+  border: 1px solid var(--yt-border);
+  border-radius: 3px;
+  box-shadow: var(--yt-drop);
+}
+
+.yt-box-inset {
+  background: var(--yt-content-bg);
+  border: 1px solid var(--yt-border-soft);
+  border-radius: 2px;
+}
+
+/* Old YT section header with bottom red underline */
+.yt-section-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--yt-text);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--yt-border-soft);
+  background: #fafafa;
+}
+
+/* The iconic YouTube logo (uppercase "You" + red "Tube" pill) */
+.yt-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  user-select: none;
+  text-decoration: none !important;
+}
+
+.yt-logo-you {
+  color: #1b1b1b;
+}
+
+.yt-logo-tube {
+  display: inline-block;
+  background: linear-gradient(180deg, #e52d27 0%, #cc181e 45%, #a90a10 100%);
+  color: #ffffff;
+  padding: 0.12em 0.32em 0.14em;
+  border-radius: 7px;
+  margin-left: 2px;
   box-shadow:
-    0 1px 0 var(--inset-glint) inset,
-    0 22px 44px rgba(30, 90, 72, 0.1),
-    0 6px 18px rgba(23, 58, 64, 0.08);
-  backdrop-filter: blur(4px);
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.feature-card {
-  background: linear-gradient(165deg, color-mix(in oklab, var(--surface-strong) 93%, white 7%), var(--surface));
-  box-shadow:
-    0 1px 0 var(--inset-glint) inset,
-    0 18px 34px rgba(30, 90, 72, 0.1),
-    0 4px 14px rgba(23, 58, 64, 0.06);
+/* Classic YT button — gradient, 1px border, subtle inset highlight */
+.yt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--yt-text);
+  background: linear-gradient(180deg, #ffffff 0%, #eaeaea 100%);
+  border: 1px solid #c6c6c6;
+  border-radius: 2px;
+  cursor: pointer;
+  line-height: 1.5;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
-.feature-card:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in oklab, var(--lagoon-deep) 35%, var(--line));
-}
-
-button,
-.island-shell,
-a {
-  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease,
-    transform 180ms ease;
-}
-
-.island-kicker {
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-weight: 700;
-  font-size: 0.69rem;
-  color: var(--kicker);
-}
-
-.nav-link {
-  position: relative;
+.yt-btn:hover {
+  background: linear-gradient(180deg, #f8f8f8 0%, #dcdcdc 100%);
+  border-color: #b0b0b0;
   text-decoration: none;
-  color: var(--sea-ink-soft);
+  color: var(--yt-text);
 }
 
-.nav-link::after {
-  content: '';
+.yt-btn:active {
+  background: linear-gradient(180deg, #dcdcdc 0%, #f0f0f0 100%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12) inset;
+}
+
+.yt-btn-red {
+  color: #ffffff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background: linear-gradient(180deg, #e52d27 0%, #cc181e 50%, #a90a10 100%);
+  border-color: #8c0a0e;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset;
+}
+
+.yt-btn-red:hover {
+  background: linear-gradient(180deg, #d81e24 0%, #b30e14 50%, #8c0a0e 100%);
+  border-color: #7a090d;
+  color: #ffffff;
+}
+
+.yt-btn-blue {
+  color: #ffffff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background: linear-gradient(180deg, #4a90e2 0%, #2a6ec7 50%, #1f5aa8 100%);
+  border-color: #1f5aa8;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset;
+}
+
+.yt-btn-blue:hover {
+  background: linear-gradient(180deg, #3a7dd0 0%, #1f5aa8 100%);
+  color: #ffffff;
+}
+
+.yt-btn-lg {
+  padding: 6px 14px;
+  font-size: 12px;
+}
+
+/* Dark top nav bar (for secondary navigation on About page etc.) */
+.yt-subnav {
+  background: linear-gradient(180deg, #4a4a4a 0%, #2d2d2d 50%, #222222 100%);
+  border: 1px solid #111;
+  color: #e7e7e7;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.yt-subnav a {
+  color: #e7e7e7;
+  font-weight: bold;
+  padding: 10px 18px;
+  display: inline-block;
+}
+
+.yt-subnav a:hover {
+  background: rgba(255, 255, 255, 0.06);
+  text-decoration: none;
+}
+
+.yt-subnav a.is-active {
+  background: var(--yt-page-bg);
+  color: var(--yt-text);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Privacy / announcement banner */
+.yt-banner {
+  background: var(--yt-banner-bg);
+  border: 1px solid var(--yt-banner-border);
+  color: #1a3f72;
+}
+
+/* Header search input — white, inset, chunky */
+.yt-search {
+  background: #ffffff;
+  border: 1px solid #c6c6c6;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+  height: 30px;
+  font-size: 13px;
+}
+
+/* Sidebar list item (left channel list) */
+.yt-side-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--yt-text);
+  border-left: 3px solid transparent;
+}
+
+.yt-side-item:hover {
+  background: #ededed;
+  text-decoration: none;
+  color: var(--yt-text);
+}
+
+.yt-side-item.is-active {
+  background: #e8e8e8;
+  border-left-color: var(--yt-red);
+  font-weight: bold;
+}
+
+/* Video row (home feed) - thumbnail + meta */
+.yt-video-row {
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--yt-border-soft);
+  align-items: flex-start;
+}
+
+.yt-video-row:last-child {
+  border-bottom: 0;
+}
+
+.yt-video-row:hover {
+  background: #fafafa;
+}
+
+/* Rounded red box around the yt Tube portion when showing logo dropdown arrows */
+.yt-triangle-down {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid currentColor;
+  margin-left: 4px;
+  opacity: 0.8;
+}
+
+/* Pagination */
+.yt-pager a,
+.yt-pager span {
+  display: inline-block;
+  min-width: 20px;
+  padding: 3px 8px;
+  margin-right: 4px;
+  border: 1px solid var(--yt-border);
+  background: #ffffff;
+  color: var(--yt-link);
+  font-size: 12px;
+  text-align: center;
+  border-radius: 2px;
+}
+
+.yt-pager a:hover {
+  background: #f4f4f4;
+  text-decoration: none;
+}
+
+.yt-pager .is-current {
+  background: var(--yt-page-bg-dark);
+  color: var(--yt-text);
+  font-weight: bold;
+}
+
+/* Comments-like avatar block */
+.yt-comment-avatar {
+  width: 36px;
+  height: 36px;
+  background: #d8d8d8;
+  border: 1px solid var(--yt-border-soft);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* About tile illustration frame */
+.yt-tile {
+  display: flex;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--yt-border-soft);
+}
+
+.yt-tile:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.yt-tile-icon {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  background: #f4f4f4;
+  border: 1px solid var(--yt-border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: var(--yt-text-soft);
+}
+
+/* Sad youtube face for 404 */
+.yt-sad {
+  width: 180px;
+  height: 130px;
+  position: relative;
+  display: inline-block;
+  transform: rotate(-10deg);
+}
+
+.yt-sad-box {
   position: absolute;
-  left: 0;
-  bottom: -8px;
-  width: 100%;
-  height: 2px;
-  transform: scaleX(0);
-  transform-origin: left;
-  background: linear-gradient(90deg, var(--lagoon), #7ed3bf);
-  transition: transform 170ms ease;
+  inset: 0;
+  background: linear-gradient(180deg, #ff2e34 0%, #c21318 60%, #8a0a0e 100%);
+  border-radius: 22px;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.18),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3),
+    inset 0 -4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.nav-link:hover,
-.nav-link.is-active {
-  color: var(--sea-ink);
+.yt-sad-eye {
+  position: absolute;
+  top: 34px;
+  width: 22px;
+  height: 22px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.15);
 }
 
-.nav-link:hover::after,
-.nav-link.is-active::after {
-  transform: scaleX(1);
+.yt-sad-eye.is-left {
+  left: 44px;
 }
 
-.rise-in {
-  animation: rise-in 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+.yt-sad-eye.is-right {
+  right: 44px;
 }
 
-@keyframes rise-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.yt-sad-mouth {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 24px;
+  border: 4px solid #ffffff;
+  border-bottom: 0;
+  border-radius: 44px 44px 0 0;
+  background: transparent;
 }
 
-.site-footer {
-  border-top: 1px solid var(--line);
-  background: color-mix(in oklab, var(--header-bg) 84%, transparent 16%);
+/* Focus ring for accessibility without breaking period look */
+:focus-visible {
+  outline: 2px solid var(--yt-link);
+  outline-offset: 1px;
 }
 
 @layer base {
