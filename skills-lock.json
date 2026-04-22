@@ -16,6 +16,11 @@
       "sourceType": "github",
       "computedHash": "2e6d569180c2e3c52d8d7089b64e952ecc7a200838b14523a8467289da6c4766"
     },
+    "mux-video": {
+      "source": "muxinc/skills",
+      "sourceType": "github",
+      "computedHash": "eaf3453ee47a8e00c657a6e9562389a88c03604761a6ed10a44224b4e7128f8a"
+    },
     "setup-api-key": {
       "source": "elevenlabs/skills",
       "sourceType": "github",
