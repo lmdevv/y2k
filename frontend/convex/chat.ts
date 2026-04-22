@@ -2,11 +2,15 @@ import { v } from 'convex/values'
 import {
   internalMutation,
   internalQuery,
+  type MutationCtx,
   mutation,
+  type QueryCtx,
   query,
 } from './_generated/server'
+import type { Doc, Id } from './_generated/dataModel'
 
 const DEFAULT_CONVERSATION_TITLE = 'Video Agent Chat'
+const ACTIVE_JOB_STALE_MS = 1000 * 60 * 20
 
 const activeJobStatuses = new Set([
   'queued',
@@ -31,19 +35,93 @@ function omitUndefined<T extends Record<string, unknown>>(value: T) {
   ) as Partial<T>
 }
 
+async function listSessionConversations(
+  ctx: QueryCtx | MutationCtx,
+  clientSessionId: string,
+) {
+  const conversations = await ctx.db
+    .query('conversations')
+    .withIndex('by_client_session', (q) => q.eq('clientSessionId', clientSessionId))
+    .collect()
+
+  return conversations.sort((left, right) => right.updatedAt - left.updatedAt)
+}
+
+async function createConversation(
+  ctx: MutationCtx,
+  clientSessionId: string,
+) {
+  const now = Date.now()
+
+  return await ctx.db.insert('conversations', {
+    clientSessionId,
+    title: DEFAULT_CONVERSATION_TITLE,
+    createdAt: now,
+    updatedAt: now,
+  })
+}
+
+async function listActiveJobs(
+  ctx: QueryCtx | MutationCtx,
+  conversationId?: Id<'conversations'>,
+) {
+  const jobs = conversationId
+    ? await ctx.db
+        .query('videoJobs')
+        .withIndex('by_conversation', (q) => q.eq('conversationId', conversationId))
+        .collect()
+    : await ctx.db.query('videoJobs').collect()
+
+  return jobs.filter((job) => activeJobStatuses.has(job.status))
+}
+
+async function failJobs(
+  ctx: MutationCtx,
+  jobs: Array<{
+    _id: Id<'videoJobs'>
+    assistantMessageId: Id<'messages'>
+  }>,
+  reason: string,
+) {
+  const now = Date.now()
+
+  for (const job of jobs) {
+    await ctx.db.patch(job._id, {
+      status: 'failed',
+      error: reason,
+      updatedAt: now,
+    })
+    await ctx.db.patch(job.assistantMessageId, {
+      body: `Failed to generate video: ${reason}`,
+      status: 'error',
+    })
+  }
+}
+
+async function recoverStaleJobs(
+  ctx: MutationCtx,
+  jobs: Awaited<ReturnType<typeof listActiveJobs>>,
+) {
+  const now = Date.now()
+  const staleJobs = jobs.filter((job) => now - job.updatedAt > ACTIVE_JOB_STALE_MS)
+
+  if (staleJobs.length > 0) {
+    await failJobs(
+      ctx,
+      staleJobs,
+      'This job stopped reporting progress and was marked failed automatically.',
+    )
+  }
+
+  return jobs.filter((job) => now - job.updatedAt <= ACTIVE_JOB_STALE_MS)
+}
+
 export const listConversations = query({
   args: {
     clientSessionId: v.string(),
   },
   handler: async (ctx, args) => {
-    const conversations = await ctx.db
-      .query('conversations')
-      .withIndex('by_client_session', (q) =>
-        q.eq('clientSessionId', args.clientSessionId),
-      )
-      .collect()
-
-    return conversations.sort((left, right) => right.updatedAt - left.updatedAt)
+    return await listSessionConversations(ctx, args.clientSessionId)
   },
 })
 
@@ -66,49 +144,74 @@ export const ensureConversation = mutation({
     clientSessionId: v.string(),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query('conversations')
-      .withIndex('by_client_session', (q) =>
-        q.eq('clientSessionId', args.clientSessionId),
-      )
-      .collect()
-
-    const current = existing.sort((left, right) => right.updatedAt - left.updatedAt)[0]
+    const current = (await listSessionConversations(ctx, args.clientSessionId))[0]
     if (current) {
       return current._id
     }
 
-    const now = Date.now()
-    return await ctx.db.insert('conversations', {
-      clientSessionId: args.clientSessionId,
-      title: DEFAULT_CONVERSATION_TITLE,
-      createdAt: now,
-      updatedAt: now,
-    })
+    return await createConversation(ctx, args.clientSessionId)
   },
 })
 
-export const sendMessage = mutation({
+const CANCEL_FOR_NEW_REQUEST =
+  'Cancelled: a new request was started. If this keeps happening, use New chat to reset this browser session.'
+
+export const listActiveJobsForConversation = internalQuery({
+  args: {
+    conversationId: v.id('conversations'),
+  },
+  handler: async (ctx, args) => {
+    return await listActiveJobs(ctx, args.conversationId)
+  },
+})
+
+export const listAllVideoJobsForClientSession = internalQuery({
+  args: {
+    clientSessionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const conversations = await listSessionConversations(ctx, args.clientSessionId)
+    const jobs: Array<Doc<'videoJobs'>> = []
+
+    for (const conversation of conversations) {
+      const batch = await ctx.db
+        .query('videoJobs')
+        .withIndex('by_conversation', (q) => q.eq('conversationId', conversation._id))
+        .collect()
+      jobs.push(...batch)
+    }
+
+    return jobs
+  },
+})
+
+export const createVideoRequest = internalMutation({
   args: {
     conversationId: v.id('conversations'),
     prompt: v.string(),
   },
+  returns: v.object({
+    jobId: v.id('videoJobs'),
+    assistantMessageId: v.id('messages'),
+    userMessageId: v.id('messages'),
+  }),
   handler: async (ctx, args) => {
     const prompt = trimPrompt(args.prompt)
     if (!prompt) {
       throw new Error('Prompt is required')
     }
 
-    const activeJobs = (await ctx.db.query('videoJobs').collect()).filter((job) =>
-      activeJobStatuses.has(job.status),
-    )
-    if (activeJobs.length > 0) {
-      throw new Error('The video agent is already working on another request.')
-    }
-
     const conversation = await ctx.db.get(args.conversationId)
     if (!conversation) {
       throw new Error('Conversation not found')
+    }
+
+    const activeAfterRecovery = await recoverStaleJobs(
+      ctx,
+      await listActiveJobs(ctx, args.conversationId),
+    )
+    if (activeAfterRecovery.length > 0) {
+      await failJobs(ctx, activeAfterRecovery, CANCEL_FOR_NEW_REQUEST)
     }
 
     const now = Date.now()
@@ -152,6 +255,39 @@ export const sendMessage = mutation({
       assistantMessageId,
       userMessageId,
     }
+  },
+})
+
+export const hardResetClientSession = internalMutation({
+  args: {
+    clientSessionId: v.string(),
+  },
+  returns: v.id('conversations'),
+  handler: async (ctx, args) => {
+    const conversations = await listSessionConversations(ctx, args.clientSessionId)
+
+    for (const conversation of conversations) {
+      const jobs = await ctx.db
+        .query('videoJobs')
+        .withIndex('by_conversation', (q) => q.eq('conversationId', conversation._id))
+        .collect()
+      const messages = await ctx.db
+        .query('messages')
+        .withIndex('by_conversation', (q) => q.eq('conversationId', conversation._id))
+        .collect()
+
+      for (const job of jobs) {
+        await ctx.db.delete(job._id)
+      }
+
+      for (const message of messages) {
+        await ctx.db.delete(message._id)
+      }
+
+      await ctx.db.delete(conversation._id)
+    }
+
+    return await createConversation(ctx, args.clientSessionId)
   },
 })
 

@@ -5,10 +5,14 @@ import { Daytona } from '@daytona/sdk'
 import { v } from 'convex/values'
 import { action } from './_generated/server'
 import { internal } from './_generated/api'
+import type { Doc, Id } from './_generated/dataModel'
 import { uploadVideoBuffer } from './mux'
 
 const DEFAULT_SNAPSHOT_NAME = 'y2k-runner'
 const DEFAULT_OPENCODE_PORT = 4096
+const RENDER_POLL_INTERVAL_MS = 5000
+const RENDER_HEARTBEAT_INTERVAL_MS = 30000
+const RENDER_TIMEOUT_MS = 1000 * 60 * 12
 const FORWARDED_ENV_KEYS = [
   'ZEN_API_KEY',
   'OPENCODE_CONFIG',
@@ -117,7 +121,9 @@ async function ensureRunnerSnapshot() {
   }
 
   throw new Error(
-    `Missing Daytona snapshot "${snapshotName}". Build it first with "nix develop -c pnpm --dir frontend daytona:snapshot".`,
+    `Missing Daytona snapshot "${snapshotName}" in this org. ` +
+      `Build and push it first with: nix develop -c pnpm --dir frontend daytona:snapshot ` +
+      `(set DAYTONA_RUNNER_SNAPSHOT in Convex env if you use a custom snapshot name).`,
   )
 }
 
@@ -212,6 +218,10 @@ function userPrompt(prompt: string) {
   ].join('\n\n')
 }
 
+function titleFromPrompt(prompt: string) {
+  return prompt.length > 60 ? `${prompt.slice(0, 57)}...` : prompt
+}
+
 function requireData<T>(value: { data?: T | null; error?: unknown }, message: string) {
   if (!value.data) {
     throw new Error(message)
@@ -219,7 +229,15 @@ function requireData<T>(value: { data?: T | null; error?: unknown }, message: st
   return value.data
 }
 
-async function runPrompt(prompt: string, previewUrl: string) {
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function isMissingFileError(error: unknown) {
+  return error instanceof Error && /no such file|not found|does not exist/i.test(error.message)
+}
+
+async function startPrompt(prompt: string, previewUrl: string) {
   const client = createOpencodeClient({
     baseUrl: previewUrl,
     directory: '/workspace',
@@ -235,16 +253,35 @@ async function runPrompt(prompt: string, previewUrl: string) {
     'OpenCode could not create a session.',
   )
 
-  const promptResult = await client.session.prompt({
-    path: { id: session.id },
-    body: {
-      system: renderSystemPrompt(),
-      parts: [{ type: 'text', text: userPrompt(prompt) }],
-    },
-  })
-  requireData(promptResult, 'OpenCode did not return a response.')
+  const state: {
+    settled: boolean
+    error: unknown
+  } = {
+    settled: false,
+    error: null,
+  }
 
-  return session.id
+  void client.session
+    .prompt({
+      path: { id: session.id },
+      body: {
+        system: renderSystemPrompt(),
+        parts: [{ type: 'text', text: userPrompt(prompt) }],
+      },
+    })
+    .then((promptResult) => {
+      requireData(promptResult, 'OpenCode did not return a response.')
+      state.settled = true
+    })
+    .catch((error) => {
+      state.error = error
+      state.settled = true
+    })
+
+  return {
+    sessionId: session.id,
+    state,
+  }
 }
 
 type RenderManifest = {
@@ -267,6 +304,124 @@ async function downloadRenderedVideo(
   return await sandbox.fs.downloadFile(videoPath)
 }
 
+async function detectRenderedVideoPath(
+  sandbox: Awaited<ReturnType<typeof createRunnerSandbox>>,
+) {
+  const response = await sandbox.process.executeCommand(
+    [
+      "python3 - <<'PY'",
+      'import json',
+      'from pathlib import Path',
+      '',
+      'render_dir = Path("/workspace/new/renders")',
+      'files = []',
+      'if render_dir.exists():',
+      '    for path in sorted(render_dir.glob("*.mp4")):',
+      '        if path.is_file():',
+      '            files.append({',
+      '                "path": str(path),',
+      '                "name": path.name,',
+      '                "size": path.stat().st_size,',
+      '            })',
+      'print(json.dumps(files))',
+      'PY',
+    ].join('\n'),
+  )
+
+  const files = JSON.parse(response.result) as Array<{
+    path: string
+    name: string
+    size: number
+  }>
+
+  const candidates = files
+    .filter((file) => !file.name.startsWith('.') && !file.name.endsWith('_temp.mp4'))
+    .filter((file) => file.size > 0)
+    .sort((left, right) => {
+      if (left.name === 'final.mp4') {
+        return -1
+      }
+      if (right.name === 'final.mp4') {
+        return 1
+      }
+      return right.size - left.size
+    })
+
+  return candidates[0]?.path
+}
+
+async function waitForRenderOutput(options: {
+  sandbox: Awaited<ReturnType<typeof createRunnerSandbox>>
+  prompt: string
+  promptState: {
+    settled: boolean
+    error: unknown
+  }
+  onHeartbeat: () => Promise<void>
+}) {
+  const deadline = Date.now() + RENDER_TIMEOUT_MS
+  let lastHeartbeatAt = 0
+  let fallbackVideoPath: string | undefined
+
+  while (Date.now() < deadline) {
+    if (Date.now() - lastHeartbeatAt >= RENDER_HEARTBEAT_INTERVAL_MS) {
+      await options.onHeartbeat()
+      lastHeartbeatAt = Date.now()
+    }
+
+    try {
+      const manifest = await downloadManifest(options.sandbox)
+      if (manifest.status === 'ok' && manifest.videoPath) {
+        return manifest
+      }
+      if (manifest.status === 'error') {
+        throw new Error(manifest.error ?? 'The agent reported a render failure.')
+      }
+    } catch (error) {
+      if (!isMissingFileError(error)) {
+        throw error
+      }
+    }
+
+    fallbackVideoPath ??= await detectRenderedVideoPath(options.sandbox)
+
+    if (options.promptState.error) {
+      if (fallbackVideoPath) {
+        return {
+          status: 'ok',
+          title: titleFromPrompt(options.prompt),
+          description: options.prompt,
+          videoPath: fallbackVideoPath,
+        } satisfies RenderManifest
+      }
+
+      throw options.promptState.error
+    }
+
+    if (options.promptState.settled && fallbackVideoPath) {
+      return {
+        status: 'ok',
+        title: titleFromPrompt(options.prompt),
+        description: options.prompt,
+        videoPath: fallbackVideoPath,
+      } satisfies RenderManifest
+    }
+
+    await sleep(RENDER_POLL_INTERVAL_MS)
+  }
+
+  if (fallbackVideoPath) {
+    return {
+      status: 'ok',
+      title: titleFromPrompt(options.prompt),
+      description: options.prompt,
+      videoPath: fallbackVideoPath,
+    } satisfies RenderManifest
+  }
+
+  throw new Error('Timed out waiting for the rendered video output.')
+}
+
 function summarizeError(error: unknown) {
   if (error instanceof Error) {
     return error.message
@@ -274,6 +429,127 @@ function summarizeError(error: unknown) {
 
   return 'Unknown error'
 }
+
+const Y2K_RUNNER_SANDBOX_LABELS: Record<string, string> = {
+  app: 'y2k',
+  purpose: 'video-agent',
+}
+const Y2K_SANDBOX_LIST_PAGE = 100
+
+async function deleteSandboxById(sandboxId: string | undefined) {
+  if (!sandboxId) {
+    return
+  }
+
+  const daytona = createDaytonaClient()
+
+  try {
+    const sandbox = await daytona.get(sandboxId)
+    await daytona.delete(sandbox, 0)
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return
+    }
+  }
+}
+
+/**
+ * Catches y2k video sandboxes that still exist in Daytona but are no longer in Convex
+ * (e.g. DB reset while a sandbox was still running).
+ */
+async function deleteY2kRunnerSandboxesForJobIds(jobIdStrings: Set<string>) {
+  if (jobIdStrings.size === 0) {
+    return
+  }
+
+  const daytona = createDaytonaClient()
+  let page = 1
+
+  for (;;) {
+    const result = await daytona.list(
+      Y2K_RUNNER_SANDBOX_LABELS,
+      page,
+      Y2K_SANDBOX_LIST_PAGE,
+    )
+
+    for (const sandbox of result.items) {
+      const jobLabel = sandbox.labels?.jobId
+      if (jobLabel && jobIdStrings.has(jobLabel)) {
+        try {
+          await daytona.delete(sandbox, 0)
+        } catch {
+          // Best-effort: sandbox may already be gone or busy deleting.
+        }
+      }
+    }
+
+    if (result.items.length < Y2K_SANDBOX_LIST_PAGE) {
+      return
+    }
+
+    page += 1
+  }
+}
+
+export const sendVideoPrompt = action({
+  args: {
+    conversationId: v.id('conversations'),
+    prompt: v.string(),
+  },
+  returns: v.object({
+    jobId: v.id('videoJobs'),
+    assistantMessageId: v.id('messages'),
+    userMessageId: v.id('messages'),
+  }),
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
+    jobId: Id<'videoJobs'>
+    assistantMessageId: Id<'messages'>
+    userMessageId: Id<'messages'>
+  }> => {
+    const active = await ctx.runQuery(internal.chat.listActiveJobsForConversation, {
+      conversationId: args.conversationId,
+    })
+
+    for (const job of active) {
+      await deleteSandboxById(job.sandboxId)
+    }
+
+    return await ctx.runMutation(internal.chat.createVideoRequest, {
+      conversationId: args.conversationId,
+      prompt: args.prompt,
+    })
+  },
+})
+
+export const resetChatSession = action({
+  args: {
+    clientSessionId: v.string(),
+  },
+  returns: v.id('conversations'),
+  handler: async (ctx, args): Promise<Id<'conversations'>> => {
+    const jobs: Array<Doc<'videoJobs'>> = await ctx.runQuery(
+      internal.chat.listAllVideoJobsForClientSession,
+      {
+        clientSessionId: args.clientSessionId,
+      },
+    )
+
+    const idStrings = new Set<string>(jobs.map((job) => String(job._id)))
+
+    for (const job of jobs) {
+      await deleteSandboxById(job.sandboxId)
+    }
+
+    await deleteY2kRunnerSandboxesForJobIds(idStrings)
+
+    return await ctx.runMutation(internal.chat.hardResetClientSession, {
+      clientSessionId: args.clientSessionId,
+    })
+  },
+})
 
 export const runVideoJob = action({
   args: {
@@ -320,8 +596,22 @@ export const runVideoJob = action({
         status: 'pending',
       })
 
-      const opencodeSessionId = await runPrompt(job.prompt, server.previewUrl)
-      const manifest = await downloadManifest(sandbox)
+      const promptRun = await startPrompt(job.prompt, server.previewUrl)
+      await ctx.runMutation(internal.chat.updateJob, {
+        jobId: job._id,
+        opencodeSessionId: promptRun.sessionId,
+      })
+      const manifest = await waitForRenderOutput({
+        sandbox,
+        prompt: job.prompt,
+        promptState: promptRun.state,
+        onHeartbeat: async () => {
+          await ctx.runMutation(internal.chat.updateJob, {
+            jobId: job._id,
+            status: 'agent_running',
+          })
+        },
+      })
 
       if (manifest.status !== 'ok' || !manifest.videoPath) {
         throw new Error(manifest.error ?? 'The agent did not produce a finished video.')
@@ -331,7 +621,7 @@ export const runVideoJob = action({
         jobId: job._id,
         status: 'render_complete',
         resultPath: manifest.videoPath,
-        opencodeSessionId,
+        opencodeSessionId: promptRun.sessionId,
       })
       await ctx.runMutation(internal.chat.updateAssistantMessage, {
         messageId: job.assistantMessageId,
