@@ -39,9 +39,9 @@ export default function Header() {
 						Browse
 					</Link>
 					<span className="text-[var(--yt-border-strong)]">|</span>
-					<a href="#movies" className="px-2 font-bold hover:underline">
-						Movies
-					</a>
+					<Link to="/chat" className="px-2 font-bold hover:underline">
+						Chat
+					</Link>
 					<span className="text-[var(--yt-border-strong)]">|</span>
 					<a href="#upload" className="px-2 font-bold hover:underline">
 						Upload

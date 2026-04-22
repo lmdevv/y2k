@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WatchVideoIdRouteImport } from './routes/watch/$videoId'
 import { Route as DemoConvexRouteImport } from './routes/demo/convex'
 
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -38,12 +44,14 @@ const DemoConvexRoute = DemoConvexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/chat': typeof ChatRoute
   '/demo/convex': typeof DemoConvexRoute
   '/watch/$videoId': typeof WatchVideoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/chat': typeof ChatRoute
   '/demo/convex': typeof DemoConvexRoute
   '/watch/$videoId': typeof WatchVideoIdRoute
 }
@@ -51,26 +59,35 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/chat': typeof ChatRoute
   '/demo/convex': typeof DemoConvexRoute
   '/watch/$videoId': typeof WatchVideoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/demo/convex' | '/watch/$videoId'
+  fullPaths: '/' | '/about' | '/chat' | '/demo/convex' | '/watch/$videoId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/demo/convex' | '/watch/$videoId'
-  id: '__root__' | '/' | '/about' | '/demo/convex' | '/watch/$videoId'
+  to: '/' | '/about' | '/chat' | '/demo/convex' | '/watch/$videoId'
+  id: '__root__' | '/' | '/about' | '/chat' | '/demo/convex' | '/watch/$videoId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  ChatRoute: typeof ChatRoute
   DemoConvexRoute: typeof DemoConvexRoute
   WatchVideoIdRoute: typeof WatchVideoIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -105,6 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  ChatRoute: ChatRoute,
   DemoConvexRoute: DemoConvexRoute,
   WatchVideoIdRoute: WatchVideoIdRoute,
 }
