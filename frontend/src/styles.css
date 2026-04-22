@@ -535,6 +535,30 @@ code {
   outline-offset: 1px;
 }
 
+/*
+ * Mux Player theming — override Mux's brand pink/purple with the
+ * classic YouTube red so the player blends into the old-YT skin.
+ * Mux Player exposes these CSS vars on the <mux-player> element.
+ */
+mux-player,
+.yt-mux-player {
+  /* Icons, time text, play button, etc. stay white for contrast on black */
+  --media-primary-color: #ffffff;
+  /* Secondary UI color (track backgrounds, inactive bits) */
+  --media-secondary-color: rgba(255, 255, 255, 0.2);
+  /* The accent — progress bar fill, loading spinner, active hover state */
+  --media-accent-color: #cc181e;
+
+  /* Back-compat / additional Media Chrome tokens Mux respects */
+  --media-range-bar-color: #cc181e;
+  --media-range-thumb-background: #cc181e;
+  --media-range-thumb-border: 1px solid #ffffff;
+  --media-control-hover-background: rgba(204, 24, 30, 0.35);
+
+  /* Hide Mux branding overlays in the player chrome */
+  --controls-backdrop-color: rgba(0, 0, 0, 0.6);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

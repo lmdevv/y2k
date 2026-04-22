@@ -105,9 +105,11 @@ function WatchPage() {
 						{/* Player */}
 						<div className="overflow-hidden border border-black bg-black">
 							<MuxPlayer
+								className="yt-mux-player"
 								playbackId={video.muxPlaybackId}
 								streamType="on-demand"
 								metadata={{ video_title: video.title }}
+								accentColor="#cc181e"
 								style={{ width: "100%", aspectRatio: "16 / 9" }}
 							/>
 						</div>
