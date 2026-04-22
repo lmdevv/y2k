@@ -1,0 +1,27 @@
+{
+  "projectName": "frontend",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "pnpm",
+  "includeExamples": true,
+  "tailwind": true,
+  "addOnOptions": {},
+  "envVarValues": {
+    "CONVEX_DEPLOYMENT": "silent-rhinoceros-212",
+    "VITE_CONVEX_URL": "https://silent-rhinoceros-212.convex.cloud",
+    "VITE_CLERK_PUBLISHABLE_KEY": "pk_test_anVzdC13aGlwcGV0LTgxLmNsZXJrLmFjY291bnRzLmRldiQ"
+  },
+  "git": false,
+  "install": true,
+  "routerOnly": false,
+  "version": 1,
+  "framework": "react",
+  "chosenAddOns": [
+    "biome",
+    "nitro",
+    "convex",
+    "shadcn",
+    "t3env",
+    "clerk"
+  ]
+}
