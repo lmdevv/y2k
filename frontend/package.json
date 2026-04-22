@@ -15,7 +15,6 @@
     "check": "biome check"
   },
   "dependencies": {
-    "@clerk/clerk-react": "^5.61.3",
     "@convex-dev/react-query": "0.1.0",
     "@mux/mux-player-react": "^3.11.8",
     "@mux/mux-uploader-react": "^1.4.1",

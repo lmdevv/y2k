@@ -17,7 +17,7 @@ function HomePage() {
 						Videos
 					</h1>
 					<p className="mt-1 text-sm text-[var(--sea-ink-soft)]">
-						Minimal MVP powered by Convex, Clerk, and Mux.
+						Minimal MVP powered by Convex and Mux.
 					</p>
 				</div>
 			</div>

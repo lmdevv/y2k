@@ -83,12 +83,6 @@ console.log(env.VITE_APP_TITLE);
 
 
 
-## Setting up Clerk
-
-- Set the `VITE_CLERK_PUBLISHABLE_KEY` in your `.env.local`.
-
-
-
 ## Routing
 
 This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.

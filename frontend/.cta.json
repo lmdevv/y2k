@@ -8,8 +8,7 @@
   "addOnOptions": {},
   "envVarValues": {
     "CONVEX_DEPLOYMENT": "silent-rhinoceros-212",
-    "VITE_CONVEX_URL": "https://silent-rhinoceros-212.convex.cloud",
-    "VITE_CLERK_PUBLISHABLE_KEY": "pk_test_anVzdC13aGlwcGV0LTgxLmNsZXJrLmFjY291bnRzLmRldiQ"
+    "VITE_CONVEX_URL": "https://silent-rhinoceros-212.convex.cloud"
   },
   "git": false,
   "install": true,
@@ -21,7 +20,6 @@
     "nitro",
     "convex",
     "shadcn",
-    "t3env",
-    "clerk"
+    "t3env"
   ]
 }
