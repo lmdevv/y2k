@@ -4,7 +4,7 @@ import { createOpencodeClient, type Config, type Session } from '@opencode-ai/sd
 import { Daytona } from '@daytona/sdk'
 import { v } from 'convex/values'
 import { action } from './_generated/server'
-import { internal } from './_generated/api'
+import { api, internal } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'
 import { uploadVideoBuffer, waitForMuxAssetReady } from './mux'
 
@@ -509,18 +509,44 @@ export const sendVideoPrompt = action({
     assistantMessageId: Id<'messages'>
     userMessageId: Id<'messages'>
   }> => {
-    const active = await ctx.runQuery(internal.chat.listActiveJobsForConversation, {
-      conversationId: args.conversationId,
-    })
-
-    for (const job of active) {
-      await deleteSandboxById(job.sandboxId)
-    }
-
     return await ctx.runMutation(internal.chat.createVideoRequest, {
       conversationId: args.conversationId,
       prompt: args.prompt,
     })
+  },
+})
+
+export const createChat = action({
+  args: {
+    clientSessionId: v.string(),
+  },
+  returns: v.id('conversations'),
+  handler: async (ctx, args): Promise<Id<'conversations'>> => {
+    return await ctx.runMutation(api.chat.createNewConversation, {
+      clientSessionId: args.clientSessionId,
+    })
+  },
+})
+
+export const deleteChat = action({
+  args: {
+    conversationId: v.id('conversations'),
+  },
+  returns: v.null(),
+  handler: async (ctx, args): Promise<null> => {
+    const jobs: Array<Doc<'videoJobs'>> = await ctx.runQuery(
+      internal.chat.listConversationJobs,
+      { conversationId: args.conversationId },
+    )
+
+    for (const job of jobs) {
+      await deleteSandboxById(job.sandboxId)
+    }
+
+    await ctx.runMutation(internal.chat.deleteConversationInternal, {
+      conversationId: args.conversationId,
+    })
+    return null
   },
 })
 

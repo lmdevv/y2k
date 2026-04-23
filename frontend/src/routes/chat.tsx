@@ -6,6 +6,7 @@ import {
 	PlusSquare,
 	Send,
 	Sparkles,
+	Trash2,
 	User,
 	Video,
 } from "lucide-react";
@@ -54,16 +55,20 @@ function ChatPage() {
 	>(null);
 	const [draft, setDraft] = useState("");
 	const [isSending, setIsSending] = useState(false);
-	const [isResetting, setIsResetting] = useState(false);
+	const [isCreatingChat, setIsCreatingChat] = useState(false);
+	const [deletingConversationId, setDeletingConversationId] = useState<
+		string | null
+	>(null);
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
 
-	const conversations = useQuery(api.chat.listConversations, {
+	const conversations = useQuery(api.chat.listConversationsWithStatus, {
 		clientSessionId,
 	});
 	const ensureConversation = useMutation(api.chat.ensureConversation);
 	const sendVideoPrompt = useAction(api.daytona.sendVideoPrompt);
-	const resetChatSession = useAction(api.daytona.resetChatSession);
+	const createChat = useAction(api.daytona.createChat);
+	const deleteChat = useAction(api.daytona.deleteChat);
 	const runVideoJob = useAction(api.daytona.runVideoJob);
 
 	useEffect(() => {
@@ -116,7 +121,7 @@ function ChatPage() {
 
 	async function handleSend(text: string) {
 		const prompt = text.trim();
-		if (!prompt || !activeConversationId || isSending || isResetting) {
+		if (!prompt || !activeConversationId || isSending) {
 			return;
 		}
 
@@ -143,15 +148,15 @@ function ChatPage() {
 	}
 
 	async function handleNewChat() {
-		if (isSending || isResetting) {
+		if (isCreatingChat) {
 			return;
 		}
 
-		setIsResetting(true);
+		setIsCreatingChat(true);
 		setErrorMessage(null);
 
 		try {
-			const conversationId = await resetChatSession({ clientSessionId });
+			const conversationId = await createChat({ clientSessionId });
 			setActiveConversationId(conversationId);
 			setDraft("");
 		} catch (error) {
@@ -159,7 +164,45 @@ function ChatPage() {
 				error instanceof Error ? error.message : "Could not start a new chat.",
 			);
 		} finally {
-			setIsResetting(false);
+			setIsCreatingChat(false);
+		}
+	}
+
+	async function handleDeleteConversation(conversationId: string) {
+		if (deletingConversationId) {
+			return;
+		}
+
+		const confirmed = window.confirm(
+			"Delete this chat? Any running sandbox for it will be stopped.",
+		);
+		if (!confirmed) {
+			return;
+		}
+
+		setDeletingConversationId(conversationId);
+		setErrorMessage(null);
+
+		try {
+			await deleteChat({ conversationId: conversationId as never });
+
+			if (activeConversationId === conversationId) {
+				const remaining = (conversations ?? []).filter(
+					(conversation) => conversation._id !== conversationId,
+				);
+				if (remaining[0]) {
+					setActiveConversationId(remaining[0]._id);
+				} else {
+					const fresh = await createChat({ clientSessionId });
+					setActiveConversationId(fresh);
+				}
+			}
+		} catch (error) {
+			setErrorMessage(
+				error instanceof Error ? error.message : "Could not delete that chat.",
+			);
+		} finally {
+			setDeletingConversationId(null);
 		}
 	}
 
@@ -197,50 +240,78 @@ function ChatPage() {
 						</div>
 					</div>
 
-					<div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)]">
+					<div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)]">
 						<div className="border-b border-[var(--yt-border-soft)] bg-[#fafafa] lg:border-b-0 lg:border-r">
 							<div className="border-b border-[var(--yt-border-soft)] px-3 py-3">
 								<div className="flex items-center justify-between gap-2">
 									<div className="text-[10px] font-bold uppercase tracking-wide text-[var(--yt-text-muted)]">
-										Conversation
+										Chats
 									</div>
 									<button
 										type="button"
 										onClick={() => void handleNewChat()}
 										className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[var(--yt-link)] hover:underline disabled:cursor-not-allowed disabled:text-[var(--yt-text-soft)]"
-										disabled={isSending || isResetting}
+										disabled={isCreatingChat}
 									>
 										<PlusSquare size={12} />
-										{isResetting ? "Resetting..." : "New chat"}
+										{isCreatingChat ? "Creating..." : "New chat"}
 									</button>
 								</div>
 								<div className="mt-2 text-[12px] font-bold text-[var(--yt-text)]">
 									{currentConversation?.title ??
-										(isResetting ? "Starting fresh..." : "Loading...")}
+										(isCreatingChat ? "Starting fresh..." : "Loading...")}
 								</div>
 							</div>
 
-							<div>
-								{(conversations ?? []).map((conversation) => (
-									<button
-										key={conversation._id}
-										type="button"
-										onClick={() => setActiveConversationId(conversation._id)}
-										className={`flex w-full items-start gap-2 border-l-[3px] px-3 py-3 text-left text-[11px] leading-[1.4] hover:bg-[#ededed] ${
-											activeConversationId === conversation._id
-												? "border-[var(--yt-red)] bg-[#e8e8e8] font-bold text-[var(--yt-text)]"
-												: "border-transparent text-[var(--yt-text)]"
-										}`}
-									>
-										<MessageSquare
-											size={12}
-											className="mt-[2px] flex-shrink-0 text-[var(--yt-text-soft)]"
-										/>
-										<span className="min-w-0 flex-1 truncate">
-											{conversation.title}
-										</span>
-									</button>
-								))}
+							<div className="max-h-[560px] overflow-y-auto">
+								{(conversations ?? []).map((conversation) => {
+									const isActive = activeConversationId === conversation._id;
+									const isDeleting =
+										deletingConversationId === conversation._id;
+									return (
+										<div
+											key={conversation._id}
+											className={`group flex w-full items-start gap-2 border-l-[3px] px-3 py-3 text-[11px] leading-[1.4] hover:bg-[#ededed] ${
+												isActive
+													? "border-[var(--yt-red)] bg-[#e8e8e8] font-bold text-[var(--yt-text)]"
+													: "border-transparent text-[var(--yt-text)]"
+											}`}
+										>
+											<button
+												type="button"
+												onClick={() =>
+													setActiveConversationId(conversation._id)
+												}
+												className="flex min-w-0 flex-1 items-start gap-2 text-left"
+											>
+												<MessageSquare
+													size={12}
+													className="mt-[2px] flex-shrink-0 text-[var(--yt-text-soft)]"
+												/>
+												<span className="min-w-0 flex-1 truncate">
+													{conversation.title}
+												</span>
+												{conversation.activeJobCount > 0 ? (
+													<span
+														title={`${conversation.activeJobCount} running`}
+														className="mt-[4px] inline-flex h-2 w-2 flex-shrink-0 animate-pulse rounded-full bg-[var(--yt-red)]"
+													/>
+												) : null}
+											</button>
+											<button
+												type="button"
+												onClick={() =>
+													void handleDeleteConversation(conversation._id)
+												}
+												disabled={isDeleting}
+												title="Delete chat"
+												className="flex-shrink-0 text-[var(--yt-text-soft)] opacity-0 transition-opacity hover:text-[var(--yt-red)] group-hover:opacity-100 disabled:opacity-50"
+											>
+												<Trash2 size={12} />
+											</button>
+										</div>
+									);
+								})}
 							</div>
 						</div>
 
@@ -289,7 +360,7 @@ function ChatPage() {
 												type="button"
 												onClick={() => void handleSend(suggestion)}
 												className="yt-btn"
-												disabled={isSending || isResetting}
+												disabled={isSending}
 											>
 												{suggestion}
 											</button>
@@ -316,17 +387,11 @@ function ChatPage() {
 									placeholder="Describe the video you want..."
 									className="yt-search flex-1 rounded-[2px] px-2 text-[13px] text-[var(--yt-text)] outline-none"
 									autoComplete="off"
-									disabled={isResetting}
 								/>
 								<button
 									type="submit"
 									className="yt-btn yt-btn-red yt-btn-lg"
-									disabled={
-										!draft.trim() ||
-										isSending ||
-										isResetting ||
-										!activeConversationId
-									}
+									disabled={!draft.trim() || isSending || !activeConversationId}
 								>
 									<Send size={12} /> Send
 								</button>
@@ -382,14 +447,18 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 					}`}
 				>
 					{message.videoId ? (
-						<Link
-							to="/watch/$videoId"
-							params={{ videoId: message.videoId }}
-							className="inline-flex items-center gap-2 font-bold text-[var(--yt-link)] hover:underline"
-						>
-							<Video size={14} />
-							{message.body}
-						</Link>
+						<span className="inline-flex flex-wrap items-center gap-1">
+							<Video size={14} className="flex-shrink-0 text-[var(--yt-red)]" />
+							<span>Sure! Check the video</span>
+							<Link
+								to="/watch/$videoId"
+								params={{ videoId: message.videoId }}
+								className="font-bold text-[var(--yt-link)] hover:underline"
+							>
+								here
+							</Link>
+							<span>.</span>
+						</span>
 					) : (
 						<span>{message.body}</span>
 					)}

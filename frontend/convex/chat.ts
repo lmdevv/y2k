@@ -125,6 +125,27 @@ export const listConversations = query({
   },
 })
 
+export const listConversationsWithStatus = query({
+  args: {
+    clientSessionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const conversations = await listSessionConversations(ctx, args.clientSessionId)
+
+    const results = [] as Array<Doc<'conversations'> & { activeJobCount: number }>
+    for (const conversation of conversations) {
+      const jobs = await ctx.db
+        .query('videoJobs')
+        .withIndex('by_conversation', (q) => q.eq('conversationId', conversation._id))
+        .collect()
+      const activeJobCount = jobs.filter((job) => activeJobStatuses.has(job.status)).length
+      results.push({ ...conversation, activeJobCount })
+    }
+
+    return results
+  },
+})
+
 export const listMessages = query({
   args: {
     conversationId: v.id('conversations'),
@@ -153,8 +174,15 @@ export const ensureConversation = mutation({
   },
 })
 
-const CANCEL_FOR_NEW_REQUEST =
-  'Cancelled: a new request was started. If this keeps happening, use New chat to reset this browser session.'
+export const createNewConversation = mutation({
+  args: {
+    clientSessionId: v.string(),
+  },
+  returns: v.id('conversations'),
+  handler: async (ctx, args) => {
+    return await createConversation(ctx, args.clientSessionId)
+  },
+})
 
 export const listActiveJobsForConversation = internalQuery({
   args: {
@@ -206,13 +234,10 @@ export const createVideoRequest = internalMutation({
       throw new Error('Conversation not found')
     }
 
-    const activeAfterRecovery = await recoverStaleJobs(
+    await recoverStaleJobs(
       ctx,
       await listActiveJobs(ctx, args.conversationId),
     )
-    if (activeAfterRecovery.length > 0) {
-      await failJobs(ctx, activeAfterRecovery, CANCEL_FOR_NEW_REQUEST)
-    }
 
     const now = Date.now()
     const userMessageId = await ctx.db.insert('messages', {
@@ -255,6 +280,49 @@ export const createVideoRequest = internalMutation({
       assistantMessageId,
       userMessageId,
     }
+  },
+})
+
+export const listConversationJobs = internalQuery({
+  args: {
+    conversationId: v.id('conversations'),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('videoJobs')
+      .withIndex('by_conversation', (q) => q.eq('conversationId', args.conversationId))
+      .collect()
+  },
+})
+
+export const deleteConversationInternal = internalMutation({
+  args: {
+    conversationId: v.id('conversations'),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const conversation = await ctx.db.get(args.conversationId)
+    if (!conversation) {
+      return null
+    }
+
+    const jobs = await ctx.db
+      .query('videoJobs')
+      .withIndex('by_conversation', (q) => q.eq('conversationId', args.conversationId))
+      .collect()
+    const messages = await ctx.db
+      .query('messages')
+      .withIndex('by_conversation', (q) => q.eq('conversationId', args.conversationId))
+      .collect()
+
+    for (const job of jobs) {
+      await ctx.db.delete(job._id)
+    }
+    for (const message of messages) {
+      await ctx.db.delete(message._id)
+    }
+    await ctx.db.delete(conversation._id)
+    return null
   },
 })
 
@@ -424,7 +492,7 @@ export const completeJob = internalMutation({
       updatedAt: Date.now(),
     })
     await ctx.db.patch(job.assistantMessageId, {
-      body: `/watch/${args.videoId}`,
+      body: 'Sure! Check the video here.',
       status: 'complete',
       videoId: args.videoId,
     })
