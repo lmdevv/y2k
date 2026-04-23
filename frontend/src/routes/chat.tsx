@@ -211,25 +211,6 @@ function ChatPage() {
 			<LeftSidebar />
 
 			<div className="min-w-0 flex-1">
-				<div
-					className="mb-4 flex min-h-[96px] items-center gap-4 overflow-hidden rounded-[2px] border border-[var(--yt-border)] px-6 py-4 text-white"
-					style={{
-						background:
-							"linear-gradient(90deg, #2a6ec7 0%, #1f5aa8 40%, #153e75 100%)",
-					}}
-				>
-					<Sparkles size={28} className="flex-shrink-0" />
-					<div>
-						<div className="text-[18px] font-bold italic leading-tight">
-							VIDEO AGENT BETA
-						</div>
-						<div className="mt-1 text-[12px] leading-[1.5] text-white/90">
-							Send a prompt, render inside Daytona, upload through Convex, and
-							get back a watch URL.
-						</div>
-					</div>
-				</div>
-
 				<div className="yt-box overflow-hidden">
 					<div className="flex items-center border-b border-[var(--yt-border-soft)] bg-[#fafafa]">
 						<div className="border-b-2 border-[var(--yt-red)] px-4 py-2 text-[12px] font-bold text-[var(--yt-text)]">
