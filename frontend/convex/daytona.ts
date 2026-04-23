@@ -6,7 +6,7 @@ import { v } from 'convex/values'
 import { action } from './_generated/server'
 import { internal } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'
-import { uploadVideoBuffer } from './mux'
+import { uploadVideoBuffer, waitForMuxAssetReady } from './mux'
 
 const DEFAULT_SNAPSHOT_NAME = 'y2k-runner'
 const DEFAULT_OPENCODE_PORT = 4096
@@ -652,6 +652,28 @@ export const runVideoJob = action({
         status: 'pending',
       })
 
+      const muxReady = await waitForMuxAssetReady({
+        uploadId: upload.id,
+      })
+
+      if (muxReady) {
+        const videoId = await ctx.runMutation(internal.videos.createGenerated, {
+          title: manifest.title ?? titleFromPrompt(job.prompt),
+          description: manifest.description ?? job.prompt,
+          muxPlaybackId: muxReady.playbackId,
+          durationSeconds: muxReady.durationSeconds,
+          conversationId: job.conversationId,
+          jobId: job._id,
+        })
+
+        await ctx.runMutation(internal.chat.completeJob, {
+          jobId: job._id,
+          muxAssetId: muxReady.assetId,
+          muxPlaybackId: muxReady.playbackId,
+          videoId,
+        })
+      }
+
       return {
         ok: true,
         sandboxId: sandbox.id,
@@ -675,6 +697,73 @@ export const runVideoJob = action({
           // Cleanup is best-effort once the render/upload flow is finished.
         }
       }
+    }
+  },
+})
+
+export const reconcileMuxProcessingJob = action({
+  args: {
+    jobId: v.id('videoJobs'),
+  },
+  returns: v.object({
+    ok: v.boolean(),
+    status: v.optional(v.literal('waiting')),
+    videoId: v.optional(v.id('videos')),
+    muxAssetId: v.optional(v.string()),
+    muxPlaybackId: v.optional(v.string()),
+  }),
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
+    ok: boolean
+    status?: 'waiting'
+    videoId?: Id<'videos'>
+    muxAssetId?: string
+    muxPlaybackId?: string
+  }> => {
+    const job: Doc<'videoJobs'> | null = await ctx.runQuery(internal.chat.getJob, {
+      jobId: args.jobId,
+    })
+    if (!job) {
+      throw new Error('Job not found')
+    }
+    if (!job.muxUploadId) {
+      throw new Error('Job does not have a Mux upload id')
+    }
+
+    const muxReady = await waitForMuxAssetReady({
+      uploadId: job.muxUploadId,
+    })
+
+    if (!muxReady) {
+      return {
+        ok: false,
+        status: 'waiting',
+      }
+    }
+
+    const videoId: Id<'videos'> = await ctx.runMutation(internal.videos.createGenerated, {
+      title: titleFromPrompt(job.prompt),
+      description: job.prompt,
+      muxPlaybackId: muxReady.playbackId,
+      durationSeconds: muxReady.durationSeconds,
+      conversationId: job.conversationId,
+      jobId: job._id,
+    })
+
+    await ctx.runMutation(internal.chat.completeJob, {
+      jobId: job._id,
+      muxAssetId: muxReady.assetId,
+      muxPlaybackId: muxReady.playbackId,
+      videoId,
+    })
+
+    return {
+      ok: true,
+      videoId,
+      muxAssetId: muxReady.assetId,
+      muxPlaybackId: muxReady.playbackId,
     }
   },
 })

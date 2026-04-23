@@ -2,6 +2,8 @@ import Mux from '@mux/mux-node'
 import { httpAction } from './_generated/server'
 import { internal } from './_generated/api'
 
+const MUX_POLL_INTERVAL_MS = 5000
+
 function getMuxTokenSecret() {
   return process.env.MUX_TOKEN_SECRET ?? process.env.MUX_SECRET_KEY
 }
@@ -48,6 +50,49 @@ export async function uploadVideoBuffer(options: {
   }
 
   return upload
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+export async function waitForMuxAssetReady(options: {
+  uploadId: string
+  maxWaitMs?: number
+}) {
+  const mux = createMuxClient()
+  const deadline = Date.now() + (options.maxWaitMs ?? 1000 * 60 * 4)
+
+  while (Date.now() < deadline) {
+    const upload = await mux.video.uploads.retrieve(options.uploadId)
+    const assetId = upload.asset_id ?? undefined
+
+    if (upload.status === 'errored') {
+      throw new Error(upload.error?.message ?? 'Mux upload errored during processing.')
+    }
+
+    if (assetId) {
+      const asset = await mux.video.assets.retrieve(assetId)
+      const playbackId = asset.playback_ids?.[0]?.id
+
+      if (asset.status === 'errored') {
+        throw new Error('Mux asset errored during processing.')
+      }
+
+      if (asset.status === 'ready' && playbackId) {
+        return {
+          assetId,
+          playbackId,
+          durationSeconds:
+            typeof asset.duration === 'number' ? asset.duration : undefined,
+        }
+      }
+    }
+
+    await sleep(MUX_POLL_INTERVAL_MS)
+  }
+
+  return null
 }
 
 function eventAssetId(event: any) {
